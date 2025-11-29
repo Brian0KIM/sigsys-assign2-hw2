@@ -10,7 +10,7 @@ using namespace std;
 #define INPUT_FILE_NAME2 "Lena_gray_NOISE.bmp"
 #define HEADERSIZE 1078 // Lena_gray.bmp 파일의 헤더의 크기
 
-void main()
+int main()
 {
 	// 이미지 저장 코드
 
@@ -297,7 +297,25 @@ void main()
 	for (int i = 0; i < N; i++) {
 		Out.write((char*)result[i], 3 * M); // 노이즈를 제거하고 R,G,B이 하나의 픽셀에 묶인 result 데이터를 출력 파일에 작성
 	}
+	Out.close();
+
+	// Memory cleanup
+	for (int i = 0; i < N; i++) {
+		delete[] image[i];
+		delete[] r[i];
+		delete[] g[i];
+		delete[] b[i];
+		delete[] result[i];
+	}
+	delete[] image;
+	delete[] r;
+	delete[] g;
+	delete[] b;
+	delete[] result;
+	delete[] header;
+	
+	In_Image.close();
 
 	system("pause");
-	return;
+	return 0;
 }

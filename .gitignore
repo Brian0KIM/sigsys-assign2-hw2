@@ -30,3 +30,84 @@
 *.exe
 *.out
 *.app
+
+#visual studio
+# Visual Studio specific files
+.vs/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.db
+*.opendb
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# TFS 2012 Local Workspace
+$tf/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Build results specific
+*.ilk
+*.log
+*.tlog
+*.idb
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Visual Studio directories
+sigsys-assign2-hw2/x64/
+sigsys-assign2-hw2/Debug/
+sigsys-assign2-hw2/Release/
+sigsys-assign2-hw2/.vs/
+sigsys-assign2-hw2/sigsys-assign2-hw2.sln
+sigsys-assign2-hw2/sigsys-assign2-hw2.vcxproj.filters
+sigsys-assign2-hw2/sigsys-assign2-hw2.vcxproj
