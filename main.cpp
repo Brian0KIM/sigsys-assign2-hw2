@@ -16,6 +16,13 @@ int main()
 
 	ifstream In_Image; // 파일 읽기
 	In_Image.open(INPUT_FILE_NAME1, ios::in | ios::binary); // INPUT_FILE_NAME1 파일을 binary로 읽어옴
+	
+	// Check if file opened successfully
+	if (!In_Image.is_open()) {
+		cout << "Error: Cannot open " << INPUT_FILE_NAME1 << endl;
+		system("pause");
+		return -1;
+	}
 
 	int M = 64, N = 64; // 이미지의 크기 정의(단위:픽셀) 
 	BYTE* header = new BYTE[HEADERSIZE]; // 이미지의 헤더 정보를 담기 위한 공간 생성
@@ -59,6 +66,14 @@ int main()
 	// Read noise image
 	ifstream In_Noise;
 	In_Noise.open(INPUT_FILE_NAME2, ios::in | ios::binary);
+	
+	// Check if noise file opened successfully
+	if (!In_Noise.is_open()) {
+		cout << "Error: Cannot open " << INPUT_FILE_NAME2 << endl;
+		system("pause");
+		return -1;
+	}
+	
 	BYTE* noise_header = new BYTE[HEADERSIZE];
 	BYTE** noise_image = new BYTE*[N];
 	BYTE** noise_r = new BYTE*[N];
@@ -175,19 +190,25 @@ int main()
 	// Save DFT images
 	ofstream Out_DFT_Original;
 	Out_DFT_Original.open("DFT_original.bmp", ios::out | ios::binary);
-	Out_DFT_Original.write((char*)header, HEADERSIZE);
-	for (int i = 0; i < N; i++) {
-		Out_DFT_Original.write((char*)dft_original_img[i], 3 * M);
+	if (Out_DFT_Original.is_open()) {
+		Out_DFT_Original.write((char*)header, HEADERSIZE);
+		for (int i = 0; i < N; i++) {
+			Out_DFT_Original.write((char*)dft_original_img[i], 3 * M);
+		}
+		Out_DFT_Original.close();
+		cout << "DFT_original.bmp saved successfully" << endl;
 	}
-	Out_DFT_Original.close();
 
 	ofstream Out_DFT_Noise;
 	Out_DFT_Noise.open("DFT_noise.bmp", ios::out | ios::binary);
-	Out_DFT_Noise.write((char*)noise_header, HEADERSIZE);
-	for (int i = 0; i < N; i++) {
-		Out_DFT_Noise.write((char*)dft_noise_img[i], 3 * M);
+	if (Out_DFT_Noise.is_open()) {
+		Out_DFT_Noise.write((char*)noise_header, HEADERSIZE);
+		for (int i = 0; i < N; i++) {
+			Out_DFT_Noise.write((char*)dft_noise_img[i], 3 * M);
+		}
+		Out_DFT_Noise.close();
+		cout << "DFT_noise.bmp saved successfully" << endl;
 	}
-	Out_DFT_Noise.close();
 
 	// Noise removal: Apply band-stop filter to remove periodic noise
 	// Detect noise peaks in frequency domain and suppress them
@@ -293,11 +314,16 @@ int main()
 
 	ofstream Out;
 	Out.open("result.bmp", ios::out | ios::binary); // 출력 파일 생성
-	Out.write((char*)header, HEADERSIZE); // 출력파일에 이미지의 헤더정보 작성
-	for (int i = 0; i < N; i++) {
-		Out.write((char*)result[i], 3 * M); // 노이즈를 제거하고 R,G,B이 하나의 픽셀에 묶인 result 데이터를 출력 파일에 작성
+	if (Out.is_open()) {
+		Out.write((char*)header, HEADERSIZE); // 출력파일에 이미지의 헤더정보 작성
+		for (int i = 0; i < N; i++) {
+			Out.write((char*)result[i], 3 * M); // 노이즈를 제거하고 R,G,B이 하나의 픽셀에 묶인 result 데이터를 출력 파일에 작성
+		}
+		Out.close();
+		cout << "result.bmp saved successfully" << endl;
+	} else {
+		cout << "Error: Cannot create result.bmp" << endl;
 	}
-	Out.close();
 
 	// Memory cleanup
 	for (int i = 0; i < N; i++) {
