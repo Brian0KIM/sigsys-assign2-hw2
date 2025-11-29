@@ -4,81 +4,69 @@
 #include<cmath>
 using namespace std;
 
-#define BYTE unsigned char // 0~255 ±îÁöÀÇ unsigned char ÀÚ·áÇüÀ» ¾ÕÀ¸·Î BYTE ¶ó´Â ´Ü¾î·Î »ç¿ë 
+#define BYTE unsigned char // 0~255 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ unsigned char ï¿½Ú·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ BYTE ï¿½ï¿½ï¿½ ï¿½Ü¾ï¿½ï¿½ ï¿½ï¿½ï¿½ 
 #define PI 3.141592
 #define INPUT_FILE_NAME1 "Lena_gray.bmp"
 #define INPUT_FILE_NAME2 "Lena_gray_NOISE.bmp"
-#define HEADERSIZE 1078 // Lena_gray.bmp ÆÄÀÏÀÇ Çì´õÀÇ Å©±â
+#define HEADERSIZE 1078 // Lena_gray.bmp ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½
 
-int main()
+void main()
 {
-	// ÀÌ¹ÌÁö ÀúÀå ÄÚµå
+	// ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½
 
-	ifstream In_Image; // ÆÄÀÏ ÀÐ±â
-	In_Image.open(INPUT_FILE_NAME1, ios::in | ios::binary); // INPUT_FILE_NAME1 ÆÄÀÏÀ» binary·Î ÀÐ¾î¿È
-	
-	// Check if file opened successfully
-	if (!In_Image.is_open()) {
-		cout << "Error: Cannot open " << INPUT_FILE_NAME1 << endl;
-		system("pause");
-		return -1;
+	ifstream In_Image; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½
+	In_Image.open(INPUT_FILE_NAME1, ios::in | ios::binary); // INPUT_FILE_NAME1 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ binaryï¿½ï¿½ ï¿½Ð¾ï¿½ï¿½
+
+	int M = 64, N = 64; // ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½:ï¿½È¼ï¿½) 
+	BYTE* header = new BYTE[HEADERSIZE]; // ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE** image = new BYTE * [N]; // Lena_gray.bmp ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE** r = new BYTE * [N]; // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ redï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE** g = new BYTE * [N]; // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ greenï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE** b = new BYTE * [N]; // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ blueï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE** result = new BYTE * [N]; // DFTï¿½ï¿½ IDFTï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	for (int i = 0; i < N; i++) { // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½Ö³ï¿½ï¿½Ï¸ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ï¿½ï¿½ï¿½Ì±ï¿½ ï¿½ï¿½ï¿½ï¿½)
+		image[i] = new BYTE[M * 3]; // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ : N * (M*3) (ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ R,G,B ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì·ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ï¿½ 64*3ï¿½ï¿½ ï¿½Ç¾ï¿½ï¿½ ï¿½ï¿½) 
+		r[i] = new BYTE[M]; // redï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ : N * M 
+		g[i] = new BYTE[M]; // greenï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ : N * M 
+		b[i] = new BYTE[M]; // blueï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ : N * M 
+		result[i] = new BYTE[M * 3]; // ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ : N * (M*3) (ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ R,G,B ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½ ï¿½ï¿½) 
 	}
 
-	int M = 64, N = 64; // ÀÌ¹ÌÁöÀÇ Å©±â Á¤ÀÇ(´ÜÀ§:ÇÈ¼¿) 
-	BYTE* header = new BYTE[HEADERSIZE]; // ÀÌ¹ÌÁöÀÇ Çì´õ Á¤º¸¸¦ ´ã±â À§ÇÑ °ø°£ »ý¼º
-	BYTE** image = new BYTE*[N]; // Lena_gray.bmp ÆÄÀÏÀÇ ÀÌ¹ÌÁö µ¥ÀÌÅÍ¸¦ ´ã±â À§ÇÑ °ø°£ »ý¼º
-	BYTE** r = new BYTE*[N]; // ÀÌ¹ÌÁö µ¥ÀÌÅÍ Áß red¿¡ ´ëÇÑ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£ »ý¼º
-	BYTE** g = new BYTE*[N]; // ÀÌ¹ÌÁö µ¥ÀÌÅÍ Áß green¿¡ ´ëÇÑ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£ »ý¼º
-	BYTE** b = new BYTE*[N]; // ÀÌ¹ÌÁö µ¥ÀÌÅÍ Áß blue¿¡ ´ëÇÑ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£ »ý¼º
-	BYTE** result = new BYTE*[N]; // DFT¿Í IDFT¸¦ ÅëÇØ ³ëÀÌÁî¸¦ Á¦°ÅÇÑ ÀÌ¹ÌÁö µ¥ÀÌÅÍ¸¦ ´ã±â À§ÇÑ °ø°£ »ý¼º
-	for (int i = 0; i < N; i++) { // °¢°¢ÀÇ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£À» 2Â÷¿øÀÇ ÇüÅÂ·Î ¸¸µå´Â °úÁ¤(¿Ö³ÄÇÏ¸é ÀÌ¹ÌÁö°¡ 2Â÷¿øÀÌ±â ¶§¹®)
-		image[i] = new BYTE[M * 3]; // ÀÌ¹ÌÁö µ¥ÀÌÅÍÀ» ´ãÀ» °ø°£ÀÇ Å©±â : N * (M*3) (ÇÑ ÇÈ¼¿Àº R,G,B ¼ººÐÀ¸·Î ÀÌ·ç¾îÁ® ÀÖÀ¸¹Ç·Î ÇàÀÇ Å©±â´Â 64*3ÀÌ µÇ¾î¾ß ÇÔ) 
-		r[i] = new BYTE[M]; // red¿¡ ´ëÇÑ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£ÀÇ Å©±â : N * M 
-		g[i] = new BYTE[M]; // green¿¡ ´ëÇÑ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£ÀÇ Å©±â : N * M 
-		b[i] = new BYTE[M]; // blue¿¡ ´ëÇÑ µ¥ÀÌÅÍ¸¦ ´ãÀ» °ø°£ÀÇ Å©±â : N * M 
-		result[i] = new BYTE[M * 3]; // ³ëÀÌÁî¸¦ Á¦°ÅÇÑ ÀÌ¹ÌÁö µ¥ÀÌÅÍÀ» ´ãÀ» °ø°£ÀÇ Å©±â : N * (M*3) (Ãâ·Â ÀÌ¹ÌÁö »ý¼ºÀ» À§ÇØ ÇÑ ÇÈ¼¿¿¡ R,G,B ¼ººÐÀÌ ¸ðµÎ µé¾î°¡¾ß ÇÔ) 
-	}
-
-	In_Image.read((char*)header, HEADERSIZE); // Çì´õ Á¤º¸¸¦ HEADERSIZEÀÇ Å©±â¸¸Å­ ÀÐ¾î¼­ header º¯¼ö¿¡ ÀúÀå
+	In_Image.read((char*)header, HEADERSIZE); // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ HEADERSIZEï¿½ï¿½ Å©ï¿½â¸¸Å­ ï¿½Ð¾î¼­ header ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	for (int i = 0; i < N; i++) {
-		In_Image.read((char*)image[i], 3 * M); // Lena_gray.bmp ÆÄÀÏÀÇ ÀÌ¹ÌÁö µ¥ÀÌÅÍ¸¦ ÀÐ°í ÀÌ¸¦ image º¯¼ö¿¡ ÀúÀå 
+		In_Image.read((char*)image[i], 3 * M); // Lena_gray.bmp ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ð°ï¿½ ï¿½Ì¸ï¿½ image ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
 	}
 
 	int place;
 	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < M; j++) { // ÀÌ¹ÌÁö µ¥ÀÌÅÍ°¡ ÀúÀåµÇ¾î ÀÖ´Â image º¯¼ö¿¡¼­ R,G,B °ªÀ» º¹»ç(½ÇÁ¦ BMP ÆÄÀÏ¿¡´Â B,G,R ¼øÀ¸·Î ´ã°Ü ÀÖÀ½)
+		for (int j = 0; j < M; j++) { // ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ ï¿½Ö´ï¿½ image ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ R,G,B ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ BMP ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½ B,G,R ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 			place = 3 * j;
-			b[i][j] = image[i][place];  // blue µ¥ÀÌÅÍ 
-			g[i][j] = image[i][place + 1]; // green µ¥ÀÌÅÍ
-			r[i][j] = image[i][place + 2];  // red µ¥ÀÌÅÍ
+			b[i][j] = image[i][place];  // blue ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
+			g[i][j] = image[i][place + 1]; // green ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			r[i][j] = image[i][place + 2];  // red ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		}
 	}
-	/* ÀÛ¼ºÇØ¾ß ÇÏ´Â ÄÚµå ºÎºÐ
+	/* ï¿½Û¼ï¿½ï¿½Ø¾ï¿½ ï¿½Ï´ï¿½ ï¿½Úµï¿½ ï¿½Îºï¿½
 
-	// 2D DFT ÇÔ¼ö ÄÚµå·Î ±¸Çö
-	// 2D DFT ÀÌ¹ÌÁö Ãâ·Â (Hint : DFT°ªÀº ¸Å¿ì Å©±â ¶§¹®¿¡ Á¤±ÔÈ­ ÀÛ¾÷À» ½ÇÇàÇØ¾ß ÇÕ´Ï´Ù)
-	// ³ëÀÌÁî Á¦°Å 
-	// 2D IDFT ÇÔ¼ö ÄÚµå·Î ±¸Çö
+	// 2D DFT ï¿½Ô¼ï¿½ ï¿½Úµï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	// 2D DFT ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (Hint : DFTï¿½ï¿½ï¿½ï¿½ ï¿½Å¿ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ ï¿½Û¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½)
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	// 2D IDFT ï¿½Ô¼ï¿½ ï¿½Úµï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	*/
 	/* ========== 2D DFT/IDFT and Noise Removal ========== */
 
+	cout << "========== 2D DFT/IDFT and Noise Removal Process Started ==========" << endl;
+
 	// Read noise image
+	cout << "1. Reading noise image..." << endl;
 	ifstream In_Noise;
 	In_Noise.open(INPUT_FILE_NAME2, ios::in | ios::binary);
-	
-	// Check if noise file opened successfully
-	if (!In_Noise.is_open()) {
-		cout << "Error: Cannot open " << INPUT_FILE_NAME2 << endl;
-		system("pause");
-		return -1;
-	}
-	
 	BYTE* noise_header = new BYTE[HEADERSIZE];
-	BYTE** noise_image = new BYTE*[N];
-	BYTE** noise_r = new BYTE*[N];
-	BYTE** noise_g = new BYTE*[N];
-	BYTE** noise_b = new BYTE*[N];
+	BYTE** noise_image = new BYTE * [N];
+	BYTE** noise_r = new BYTE * [N];
+	BYTE** noise_g = new BYTE * [N];
+	BYTE** noise_b = new BYTE * [N];
 	for (int i = 0; i < N; i++) {
 		noise_image[i] = new BYTE[M * 3];
 		noise_r[i] = new BYTE[M];
@@ -99,6 +87,7 @@ int main()
 			noise_r[i][j] = noise_image[i][place + 2];
 		}
 	}
+	cout << "   - Noise image loaded successfully." << endl;
 
 	// Create frequency domain arrays
 	complex<double>** F_original = new complex<double>*[N];
@@ -109,6 +98,7 @@ int main()
 	}
 
 	// 2D DFT for original image (using red channel for gray image)
+	cout << "2. Performing 2D DFT on original image..." << endl;
 	for (int u = 0; u < N; u++) {
 		for (int v = 0; v < M; v++) {
 			complex<double> sum(0.0, 0.0);
@@ -123,8 +113,10 @@ int main()
 			F_original[u][v] = sum;
 		}
 	}
+	cout << "   - Original image DFT completed." << endl;
 
 	// 2D DFT for noise image
+	cout << "3. Performing 2D DFT on noise image..." << endl;
 	for (int u = 0; u < N; u++) {
 		for (int v = 0; v < M; v++) {
 			complex<double> sum(0.0, 0.0);
@@ -139,12 +131,14 @@ int main()
 			F_noise[u][v] = sum;
 		}
 	}
+	cout << "   - Noise image DFT completed." << endl;
 
 	// Output DFT magnitude images (normalized)
-	BYTE** dft_original = new BYTE*[N];
-	BYTE** dft_noise = new BYTE*[N];
-	BYTE** dft_original_img = new BYTE*[N];
-	BYTE** dft_noise_img = new BYTE*[N];
+	cout << "4. Normalizing and saving DFT images..." << endl;
+	BYTE** dft_original = new BYTE * [N];
+	BYTE** dft_noise = new BYTE * [N];
+	BYTE** dft_original_img = new BYTE * [N];
+	BYTE** dft_noise_img = new BYTE * [N];
 	for (int i = 0; i < N; i++) {
 		dft_original[i] = new BYTE[M];
 		dft_noise[i] = new BYTE[M];
@@ -190,28 +184,23 @@ int main()
 	// Save DFT images
 	ofstream Out_DFT_Original;
 	Out_DFT_Original.open("DFT_original.bmp", ios::out | ios::binary);
-	if (Out_DFT_Original.is_open()) {
-		Out_DFT_Original.write((char*)header, HEADERSIZE);
-		for (int i = 0; i < N; i++) {
-			Out_DFT_Original.write((char*)dft_original_img[i], 3 * M);
-		}
-		Out_DFT_Original.close();
-		cout << "DFT_original.bmp saved successfully" << endl;
+	Out_DFT_Original.write((char*)header, HEADERSIZE);
+	for (int i = 0; i < N; i++) {
+		Out_DFT_Original.write((char*)dft_original_img[i], 3 * M);
 	}
+	Out_DFT_Original.close();
 
 	ofstream Out_DFT_Noise;
 	Out_DFT_Noise.open("DFT_noise.bmp", ios::out | ios::binary);
-	if (Out_DFT_Noise.is_open()) {
-		Out_DFT_Noise.write((char*)noise_header, HEADERSIZE);
-		for (int i = 0; i < N; i++) {
-			Out_DFT_Noise.write((char*)dft_noise_img[i], 3 * M);
-		}
-		Out_DFT_Noise.close();
-		cout << "DFT_noise.bmp saved successfully" << endl;
+	Out_DFT_Noise.write((char*)noise_header, HEADERSIZE);
+	for (int i = 0; i < N; i++) {
+		Out_DFT_Noise.write((char*)dft_noise_img[i], 3 * M);
 	}
+	Out_DFT_Noise.close();
+	cout << "   - DFT images saved (DFT_original.bmp, DFT_noise.bmp)." << endl;
 
-	// Noise removal: Apply band-stop filter to remove periodic noise
-	// Detect noise peaks in frequency domain and suppress them
+	// Noise removal: Detect and suppress noise peaks in frequency domain
+	cout << "5. Applying noise removal filter..." << endl;
 	complex<double>** F_filtered = new complex<double>*[N];
 	for (int i = 0; i < N; i++) {
 		F_filtered[i] = new complex<double>[M];
@@ -224,21 +213,54 @@ int main()
 		}
 	}
 
-	// Find and suppress noise peaks (high magnitude points excluding DC component)
-	double threshold = max_mag_noise / log(1.0 + abs(F_noise[0][0])) * abs(F_noise[0][0]) * 0.3;
+	// Find noise peaks by comparing with original spectrum
+	// Calculate average magnitude (excluding DC component)
+	double avg_mag = 0.0;
+	int count = 0;
+	for (int i = 1; i < N; i++) {
+		for (int j = 1; j < M; j++) {
+			avg_mag += abs(F_noise[i][j]);
+			count++;
+		}
+	}
+	avg_mag /= count;
+
+	// Set threshold as multiple of average magnitude
+	double threshold = avg_mag * 8.0;
+	int peaks_removed = 0;
+
+	// Find and suppress noise peaks
 	for (int u = 0; u < N; u++) {
 		for (int v = 0; v < M; v++) {
 			double mag = abs(F_noise[u][v]);
-			// Suppress high frequency noise peaks (preserve low frequencies for image content)
-			if (mag > threshold && (u > N/8 || v > M/8) && (u < 7*N/8 || v < 7*M/8)) {
-				double ratio = 0.1; // Reduce by 90%
-				F_filtered[u][v] = F_filtered[u][v] * ratio;
+			// Skip DC component
+			if (u == 0 && v == 0) continue;
+
+			// Detect peaks that are significantly higher than average
+			if (mag > threshold) {
+				// Apply notch filter around the peak
+				int radius = 3;
+				for (int du = -radius; du <= radius; du++) {
+					for (int dv = -radius; dv <= radius; dv++) {
+						int nu = u + du;
+						int nv = v + dv;
+						if (nu >= 0 && nu < N && nv >= 0 && nv < M) {
+							// Gaussian-like suppression
+							double dist = sqrt(du * du + dv * dv);
+							double weight = exp(-dist * dist / (2.0 * radius * radius));
+							F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - 0.95 * weight);
+						}
+					}
+				}
+				peaks_removed++;
 			}
 		}
 	}
+	cout << "   - Noise peaks detected and suppressed: " << peaks_removed << " peaks." << endl;
 
 	// 2D IDFT to reconstruct the image
-	double** reconstructed = new double*[N];
+	cout << "6. Performing 2D IDFT to reconstruct image..." << endl;
+	double** reconstructed = new double* [N];
 	for (int i = 0; i < N; i++) {
 		reconstructed[i] = new double[M];
 	}
@@ -256,8 +278,10 @@ int main()
 			reconstructed[x][y] = real(sum) / (N * M);
 		}
 	}
+	cout << "   - IDFT completed." << endl;
 
 	// Clip and convert to BYTE
+	cout << "7. Converting reconstructed image to output format..." << endl;
 	for (int i = 0; i < N; i++) {
 		for (int j = 0; j < M; j++) {
 			double val = reconstructed[i][j];
@@ -268,6 +292,7 @@ int main()
 			b[i][j] = (BYTE)val;
 		}
 	}
+	cout << "   - Image conversion completed." << endl;
 
 	// Clean up
 	for (int i = 0; i < N; i++) {
@@ -299,49 +324,32 @@ int main()
 	delete[] reconstructed;
 	In_Noise.close();
 
+	cout << "========== Process Completed Successfully! ==========" << endl;
+	cout << "Output files created:" << endl;
+	cout << "   - DFT_original.bmp : DFT of original image" << endl;
+	cout << "   - DFT_noise.bmp    : DFT of noise image" << endl;
+	cout << "   - result.bmp       : Denoised image" << endl;
+
 	/* ========== End of DFT/IDFT and Noise Removal ========== */
 
-	// ÀÌ¹ÌÁö »ý¼º ÄÚµå
+	// ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½
 
 	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < M; j++) { // DFT¿Í IDFT¸¦ ÅëÇØ ³ëÀÌÁî¸¦ Á¦°ÅÇÑ µ¥ÀÌÅÍ¸¦ result º¯¼ö¿¡ ÇÏ³ª·Î ¹­±â(BMP ÆÄÀÏ »ý¼ºÀ» À§ÇØ ÇÑ ÇÈ¼¿Àº 24 bit(R,G,B)·Î ±¸¼ºµÇ¾ß ÇÔ)
+		for (int j = 0; j < M; j++) { // DFTï¿½ï¿½ IDFTï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ result ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(BMP ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ 24 bit(R,G,B)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ ï¿½ï¿½)
 			place = 3 * j;
-			result[i][place] = b[i][j];  // gray ÀÌ¹ÌÁö´Â R,G,B °ªÀÌ ¸ðµÎ °°À¸¹Ç·Î ÇÏ³ªÀÇ º¯¼ö¸¸ ÀÌ¿ëÇØ¼­ ÀúÀåÇØµµ µÊ
+			result[i][place] = b[i][j];  // gray ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ R,G,B ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ ï¿½ï¿½
 			result[i][place + 1] = g[i][j];
 			result[i][place + 2] = r[i][j];
 		}
 	}
 
 	ofstream Out;
-	Out.open("result.bmp", ios::out | ios::binary); // Ãâ·Â ÆÄÀÏ »ý¼º
-	if (Out.is_open()) {
-		Out.write((char*)header, HEADERSIZE); // Ãâ·ÂÆÄÀÏ¿¡ ÀÌ¹ÌÁöÀÇ Çì´õÁ¤º¸ ÀÛ¼º
-		for (int i = 0; i < N; i++) {
-			Out.write((char*)result[i], 3 * M); // ³ëÀÌÁî¸¦ Á¦°ÅÇÏ°í R,G,BÀÌ ÇÏ³ªÀÇ ÇÈ¼¿¿¡ ¹­ÀÎ result µ¥ÀÌÅÍ¸¦ Ãâ·Â ÆÄÀÏ¿¡ ÀÛ¼º
-		}
-		Out.close();
-		cout << "result.bmp saved successfully" << endl;
-	} else {
-		cout << "Error: Cannot create result.bmp" << endl;
-	}
-
-	// Memory cleanup
+	Out.open("result.bmp", ios::out | ios::binary); // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	Out.write((char*)header, HEADERSIZE); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Û¼ï¿½
 	for (int i = 0; i < N; i++) {
-		delete[] image[i];
-		delete[] r[i];
-		delete[] g[i];
-		delete[] b[i];
-		delete[] result[i];
+		Out.write((char*)result[i], 3 * M); // ï¿½ï¿½ï¿½ï¿½ï¿½î¸¦ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ R,G,Bï¿½ï¿½ ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½È¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ result ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½Û¼ï¿½
 	}
-	delete[] image;
-	delete[] r;
-	delete[] g;
-	delete[] b;
-	delete[] result;
-	delete[] header;
-	
-	In_Image.close();
 
 	system("pause");
-	return 0;
+	return;
 }
