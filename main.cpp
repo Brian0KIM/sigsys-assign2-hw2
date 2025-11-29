@@ -213,42 +213,60 @@ void main()
 		}
 	}
 
-	// Find noise peaks by comparing with original spectrum
-	// Calculate average magnitude (excluding DC component)
-	double avg_mag = 0.0;
+	// Find noise peaks by detecting outliers in frequency domain
+	// First, sort magnitudes to find statistical properties
+	double* magnitudes = new double[N * M];
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < M; j++) {
+			magnitudes[i * M + j] = abs(F_noise[i][j]);
+		}
+	}
+
+	// Calculate statistics (excluding DC component for better threshold)
+	double sum = 0.0;
+	double sum_sq = 0.0;
 	int count = 0;
-	for (int i = 1; i < N; i++) {
-		for (int j = 1; j < M; j++) {
-			avg_mag += abs(F_noise[i][j]);
+	for (int i = 0; i < N * M; i++) {
+		if (i != 0) {  // Skip DC component
+			sum += magnitudes[i];
+			sum_sq += magnitudes[i] * magnitudes[i];
 			count++;
 		}
 	}
-	avg_mag /= count;
+	double mean_mag = sum / count;
+	double std_mag = sqrt(sum_sq / count - mean_mag * mean_mag);
 
-	// Set threshold as multiple of average magnitude
-	double threshold = avg_mag * 8.0;
+	// Set threshold as mean + 3*std (captures outliers)
+	double threshold = mean_mag + 3.0 * std_mag;
 	int peaks_removed = 0;
 
-	// Find and suppress noise peaks
+	cout << "   - Mean magnitude: " << mean_mag << ", Std: " << std_mag << endl;
+	cout << "   - Threshold: " << threshold << endl;
+
+	// Find and suppress noise peaks (outliers)
 	for (int u = 0; u < N; u++) {
 		for (int v = 0; v < M; v++) {
 			double mag = abs(F_noise[u][v]);
-			// Skip DC component
+			
+			// Skip DC component and low frequency area (preserve image content)
 			if (u == 0 && v == 0) continue;
-
-			// Detect peaks that are significantly higher than average
+			
+			// Detect peaks that are statistical outliers
 			if (mag > threshold) {
-				// Apply notch filter around the peak
-				int radius = 3;
+				// Apply selective notch filter
+				int radius = 2;
 				for (int du = -radius; du <= radius; du++) {
 					for (int dv = -radius; dv <= radius; dv++) {
 						int nu = u + du;
 						int nv = v + dv;
 						if (nu >= 0 && nu < N && nv >= 0 && nv < M) {
-							// Gaussian-like suppression
-							double dist = sqrt(du * du + dv * dv);
-							double weight = exp(-dist * dist / (2.0 * radius * radius));
-							F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - 0.95 * weight);
+							// Gentle Gaussian-like suppression
+							double dist = sqrt((double)(du * du + dv * dv));
+							if (dist <= radius) {
+								double weight = exp(-dist * dist / (2.0 * radius * radius / 4.0));
+								// Reduce by 70% at center, less at edges
+								F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - 0.7 * weight);
+							}
 						}
 					}
 				}
@@ -256,6 +274,8 @@ void main()
 			}
 		}
 	}
+	
+	delete[] magnitudes;
 	cout << "   - Noise peaks detected and suppressed: " << peaks_removed << " peaks." << endl;
 
 	// 2D IDFT to reconstruct the image
