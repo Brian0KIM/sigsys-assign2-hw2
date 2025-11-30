@@ -263,7 +263,7 @@ void main()
 	}
 	
 	// Find threshold based on top differences
-	int percentile_idx = (int)(peak_count * 0.001);  // Top 0.1%
+	int percentile_idx = (int)(peak_count * 0.003);  // Top 0.3%
 	if (percentile_idx < 10) percentile_idx = 10;
 	double diff_threshold = noise_peaks[percentile_idx].difference;
 	
@@ -278,7 +278,7 @@ void main()
 	
 	for (int i = 0; i < peak_count; i++) {
 		// Stop if difference becomes insignificant
-		if (noise_peaks[i].difference < diff_threshold * 0.5) break;
+		if (noise_peaks[i].difference < diff_threshold * 0.3) break;
 		
 		int u = noise_peaks[i].u;
 		int v = noise_peaks[i].v;
@@ -286,18 +286,18 @@ void main()
 		double mag_noise = noise_peaks[i].mag_noise;
 		
 		// Only suppress if noise is significantly larger (ratio > 2)
-		if (noise_peaks[i].ratio > 2.0 || noise_peaks[i].difference > diff_threshold) {
+		if (noise_peaks[i].ratio > 1.5 || noise_peaks[i].difference > diff_threshold) {
 			// Calculate suppression factor: reduce to original level
 			double target_reduction = 0.0;
 			if (mag_noise > 0) {
 				target_reduction = 1.0 - (mag_orig / mag_noise);
 				// Limit suppression to avoid artifacts
-				if (target_reduction > 0.95) target_reduction = 0.95;
-				if (target_reduction < 0.3) target_reduction = 0.3;
+				if (target_reduction > 0.92) target_reduction = 0.92;
+				if (target_reduction < 0.4) target_reduction = 0.4;
 			}
 			
 			// Apply notch filter around this peak
-			int radius = 2;
+			int radius = 3;
 			for (int du = -radius; du <= radius; du++) {
 				for (int dv = -radius; dv <= radius; dv++) {
 					int nu = u + du;
