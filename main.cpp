@@ -213,69 +213,76 @@ void main()
 		}
 	}
 
-	// Find noise peaks by detecting outliers in frequency domain
-	// First, sort magnitudes to find statistical properties
-	double* magnitudes = new double[N * M];
-	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < M; j++) {
-			magnitudes[i * M + j] = abs(F_noise[i][j]);
-		}
-	}
-
-	// Calculate statistics (excluding DC component for better threshold)
-	double sum = 0.0;
-	double sum_sq = 0.0;
-	int count = 0;
-	for (int i = 0; i < N * M; i++) {
-		if (i != 0) {  // Skip DC component
-			sum += magnitudes[i];
-			sum_sq += magnitudes[i] * magnitudes[i];
-			count++;
-		}
-	}
-	double mean_mag = sum / count;
-	double std_mag = sqrt(sum_sq / count - mean_mag * mean_mag);
-
-	// Set threshold as mean + 3*std (captures outliers)
-	double threshold = mean_mag + 3.0 * std_mag;
-	int peaks_removed = 0;
-
-	cout << "   - Mean magnitude: " << mean_mag << ", Std: " << std_mag << endl;
-	cout << "   - Threshold: " << threshold << endl;
-
-	// Find and suppress noise peaks (outliers)
+	// Find top frequency peaks (periodic noise creates strong peaks)
+	// Store all magnitudes with their positions
+	struct Peak {
+		int u, v;
+		double magnitude;
+	};
+	
+	Peak* peaks = new Peak[N * M];
+	int peak_count = 0;
+	
 	for (int u = 0; u < N; u++) {
 		for (int v = 0; v < M; v++) {
-			double mag = abs(F_noise[u][v]);
-			
-			// Skip DC component and low frequency area (preserve image content)
+			// Skip DC component
 			if (u == 0 && v == 0) continue;
 			
-			// Detect peaks that are statistical outliers
-			if (mag > threshold) {
-				// Apply selective notch filter
-				int radius = 2;
-				for (int du = -radius; du <= radius; du++) {
-					for (int dv = -radius; dv <= radius; dv++) {
-						int nu = u + du;
-						int nv = v + dv;
-						if (nu >= 0 && nu < N && nv >= 0 && nv < M) {
-							// Gentle Gaussian-like suppression
-							double dist = sqrt((double)(du * du + dv * dv));
-							if (dist <= radius) {
-								double weight = exp(-dist * dist / (2.0 * radius * radius / 4.0));
-								// Reduce by 70% at center, less at edges
-								F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - 0.7 * weight);
-							}
-						}
-					}
-				}
-				peaks_removed++;
+			peaks[peak_count].u = u;
+			peaks[peak_count].v = v;
+			peaks[peak_count].magnitude = abs(F_noise[u][v]);
+			peak_count++;
+		}
+	}
+	
+	// Simple bubble sort to find top peaks (sufficient for small arrays)
+	for (int i = 0; i < peak_count - 1; i++) {
+		for (int j = 0; j < peak_count - i - 1; j++) {
+			if (peaks[j].magnitude < peaks[j + 1].magnitude) {
+				Peak temp = peaks[j];
+				peaks[j] = peaks[j + 1];
+				peaks[j + 1] = temp;
 			}
 		}
 	}
 	
-	delete[] magnitudes;
+	// Find 99th percentile as threshold
+	int percentile_idx = (int)(peak_count * 0.01);  // Top 1%
+	double threshold = peaks[percentile_idx].magnitude;
+	
+	cout << "   - 99th percentile magnitude: " << threshold << endl;
+	cout << "   - Top peak: " << peaks[0].magnitude << " at (" << peaks[0].u << "," << peaks[0].v << ")" << endl;
+	
+	// Apply notch filter to top peaks
+	int peaks_removed = 0;
+	int max_peaks_to_remove = 20;  // Limit to avoid over-filtering
+	
+	for (int i = 0; i < peak_count && i < max_peaks_to_remove; i++) {
+		if (peaks[i].magnitude < threshold * 0.8) break;  // Stop if magnitude drops significantly
+		
+		int u = peaks[i].u;
+		int v = peaks[i].v;
+		
+		// Apply notch filter around this peak
+		int radius = 2;
+		for (int du = -radius; du <= radius; du++) {
+			for (int dv = -radius; dv <= radius; dv++) {
+				int nu = u + du;
+				int nv = v + dv;
+				if (nu >= 0 && nu < N && nv >= 0 && nv < M) {
+					double dist = sqrt((double)(du * du + dv * dv));
+					if (dist <= radius) {
+						// Stronger suppression at peak center
+						double weight = exp(-dist * dist / 2.0);
+						F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - 0.9 * weight);
+					}
+				}
+			}
+		}
+		peaks_removed++;
+	}
+	
+	delete[] peaks;
 	cout << "   - Noise peaks detected and suppressed: " << peaks_removed << " peaks." << endl;
 
 	// 2D IDFT to reconstruct the image
