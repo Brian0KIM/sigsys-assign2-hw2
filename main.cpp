@@ -213,14 +213,17 @@ void main()
 		}
 	}
 
-	// Find top frequency peaks (periodic noise creates strong peaks)
-	// Store all magnitudes with their positions
-	struct Peak {
+	// Compare original and noise DFT to find noise-specific peaks
+	// Calculate magnitude difference between noise and original
+	struct NoisePeak {
 		int u, v;
-		double magnitude;
+		double mag_noise;
+		double mag_original;
+		double difference;
+		double ratio;
 	};
 	
-	Peak* peaks = new Peak[N * M];
+	NoisePeak* noise_peaks = new NoisePeak[N * M];
 	int peak_count = 0;
 	
 	for (int u = 0; u < N; u++) {
@@ -228,62 +231,94 @@ void main()
 			// Skip DC component
 			if (u == 0 && v == 0) continue;
 			
-			peaks[peak_count].u = u;
-			peaks[peak_count].v = v;
-			peaks[peak_count].magnitude = abs(F_noise[u][v]);
+			double mag_orig = abs(F_original[u][v]);
+			double mag_noise = abs(F_noise[u][v]);
+			
+			noise_peaks[peak_count].u = u;
+			noise_peaks[peak_count].v = v;
+			noise_peaks[peak_count].mag_noise = mag_noise;
+			noise_peaks[peak_count].mag_original = mag_orig;
+			noise_peaks[peak_count].difference = mag_noise - mag_orig;
+			
+			// Calculate ratio (how much bigger is noise magnitude)
+			if (mag_orig > 1.0) {
+				noise_peaks[peak_count].ratio = mag_noise / mag_orig;
+			} else {
+				noise_peaks[peak_count].ratio = mag_noise / 1.0;
+			}
+			
 			peak_count++;
 		}
 	}
 	
-	// Simple bubble sort to find top peaks (sufficient for small arrays)
+	// Sort by difference (descending) to find biggest noise contributions
 	for (int i = 0; i < peak_count - 1; i++) {
 		for (int j = 0; j < peak_count - i - 1; j++) {
-			if (peaks[j].magnitude < peaks[j + 1].magnitude) {
-				Peak temp = peaks[j];
-				peaks[j] = peaks[j + 1];
-				peaks[j + 1] = temp;
+			if (noise_peaks[j].difference < noise_peaks[j + 1].difference) {
+				NoisePeak temp = noise_peaks[j];
+				noise_peaks[j] = noise_peaks[j + 1];
+				noise_peaks[j + 1] = temp;
 			}
 		}
 	}
 	
-	// Find 99th percentile as threshold
-	int percentile_idx = (int)(peak_count * 0.01);  // Top 1%
-	double threshold = peaks[percentile_idx].magnitude;
+	// Find threshold based on top differences
+	int percentile_idx = (int)(peak_count * 0.001);  // Top 0.1%
+	if (percentile_idx < 10) percentile_idx = 10;
+	double diff_threshold = noise_peaks[percentile_idx].difference;
 	
-	cout << "   - 99th percentile magnitude: " << threshold << endl;
-	cout << "   - Top peak: " << peaks[0].magnitude << " at (" << peaks[0].u << "," << peaks[0].v << ")" << endl;
+	cout << "   - Top noise peak: mag_noise=" << noise_peaks[0].mag_noise 
+		 << ", mag_orig=" << noise_peaks[0].mag_original 
+		 << ", diff=" << noise_peaks[0].difference 
+		 << " at (" << noise_peaks[0].u << "," << noise_peaks[0].v << ")" << endl;
+	cout << "   - Difference threshold: " << diff_threshold << endl;
 	
-	// Apply notch filter to top peaks
+	// Apply notch filter to peaks where noise magnitude >> original magnitude
 	int peaks_removed = 0;
-	int max_peaks_to_remove = 20;  // Limit to avoid over-filtering
 	
-	for (int i = 0; i < peak_count && i < max_peaks_to_remove; i++) {
-		if (peaks[i].magnitude < threshold * 0.8) break;  // Stop if magnitude drops significantly
+	for (int i = 0; i < peak_count; i++) {
+		// Stop if difference becomes insignificant
+		if (noise_peaks[i].difference < diff_threshold * 0.5) break;
 		
-		int u = peaks[i].u;
-		int v = peaks[i].v;
+		int u = noise_peaks[i].u;
+		int v = noise_peaks[i].v;
+		double mag_orig = noise_peaks[i].mag_original;
+		double mag_noise = noise_peaks[i].mag_noise;
 		
-		// Apply notch filter around this peak
-		int radius = 2;
-		for (int du = -radius; du <= radius; du++) {
-			for (int dv = -radius; dv <= radius; dv++) {
-				int nu = u + du;
-				int nv = v + dv;
-				if (nu >= 0 && nu < N && nv >= 0 && nv < M) {
-					double dist = sqrt((double)(du * du + dv * dv));
-					if (dist <= radius) {
-						// Stronger suppression at peak center
-						double weight = exp(-dist * dist / 2.0);
-						F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - 0.9 * weight);
+		// Only suppress if noise is significantly larger (ratio > 2)
+		if (noise_peaks[i].ratio > 2.0 || noise_peaks[i].difference > diff_threshold) {
+			// Calculate suppression factor: reduce to original level
+			double target_reduction = 0.0;
+			if (mag_noise > 0) {
+				target_reduction = 1.0 - (mag_orig / mag_noise);
+				// Limit suppression to avoid artifacts
+				if (target_reduction > 0.95) target_reduction = 0.95;
+				if (target_reduction < 0.3) target_reduction = 0.3;
+			}
+			
+			// Apply notch filter around this peak
+			int radius = 2;
+			for (int du = -radius; du <= radius; du++) {
+				for (int dv = -radius; dv <= radius; dv++) {
+					int nu = u + du;
+					int nv = v + dv;
+					if (nu >= 0 && nu < N && nv >= 0 && nv < M) {
+						double dist = sqrt((double)(du * du + dv * dv));
+						if (dist <= radius) {
+							// Gaussian weight: stronger at center
+							double weight = exp(-dist * dist / 2.0);
+							double suppression = target_reduction * weight;
+							F_filtered[nu][nv] = F_filtered[nu][nv] * (1.0 - suppression);
+						}
 					}
 				}
 			}
+			peaks_removed++;
 		}
-		peaks_removed++;
 	}
 	
-	delete[] peaks;
-	cout << "   - Noise peaks detected and suppressed: " << peaks_removed << " peaks." << endl;
+	delete[] noise_peaks;
+	cout << "   - Noise-specific peaks detected and suppressed: " << peaks_removed << " peaks." << endl;
 
 	// 2D IDFT to reconstruct the image
 	cout << "6. Performing 2D IDFT to reconstruct image..." << endl;
