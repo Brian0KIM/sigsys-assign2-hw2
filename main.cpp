@@ -168,13 +168,11 @@ void main()
 		}
 	}
 
-	// Normalize and shift for visualization
+	// Normalize for visualization (without centering/shift)
 	for (int i = 0; i < N; i++) {
 		for (int j = 0; j < M; j++) {
-			int u = (i + N / 2) % N;
-			int v = (j + M / 2) % M;
-			dft_original[u][v] = (BYTE)(255.0 * log(1.0 + abs(F_original[i][j])) / max_mag_original);
-			dft_noise[u][v] = (BYTE)(255.0 * log(1.0 + abs(F_noise[i][j])) / max_mag_noise);
+			dft_original[i][j] = (BYTE)(255.0 * log(1.0 + abs(F_original[i][j])) / max_mag_original);
+			dft_noise[i][j] = (BYTE)(255.0 * log(1.0 + abs(F_noise[i][j])) / max_mag_noise);
 		}
 	}
 
