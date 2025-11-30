@@ -144,6 +144,16 @@ void main()
 		dft_noise[i] = new BYTE[M];
 		dft_original_img[i] = new BYTE[M * 3];
 		dft_noise_img[i] = new BYTE[M * 3];
+		
+		// Initialize arrays to zero to avoid garbage values
+		for (int j = 0; j < M; j++) {
+			dft_original[i][j] = 0;
+			dft_noise[i][j] = 0;
+		}
+		for (int j = 0; j < M * 3; j++) {
+			dft_original_img[i][j] = 0;
+			dft_noise_img[i][j] = 0;
+		}
 	}
 
 	// Find max magnitude for normalization
