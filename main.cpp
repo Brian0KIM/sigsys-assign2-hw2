@@ -206,8 +206,8 @@ void main()
 	const double PEAK_PERCENTILE = 0.003;        // Top 0.3% peaks (increase to remove more noise)
 	const double DIFF_THRESHOLD_MULT = 0.3;      // Difference threshold multiplier (decrease to remove more)
 	const double MIN_NOISE_RATIO = 1.5;          // Minimum noise/original ratio (decrease to be more sensitive)
-	const double MIN_SUPPRESSION = 0.4;          // Minimum suppression (40%)
-	const double MAX_SUPPRESSION = 0.92;         // Maximum suppression (92%)
+	const double MIN_SUPPRESSION = 0.3;          // Minimum suppression (40%)
+	const double MAX_SUPPRESSION = 0.95;         // Maximum suppression (92%)
 	const int NOTCH_RADIUS = 3;                  // Notch filter radius (increase for wider suppression)
 	
 	complex<double>** F_filtered = new complex<double>*[N];
