@@ -201,6 +201,15 @@ void main()
 
 	// Noise removal: Detect and suppress noise peaks in frequency domain
 	cout << "5. Applying noise removal filter..." << endl;
+	
+	// ===== Adjustable Parameters for Noise Removal =====
+	const double PEAK_PERCENTILE = 0.003;        // Top 0.3% peaks (increase to remove more noise)
+	const double DIFF_THRESHOLD_MULT = 0.3;      // Difference threshold multiplier (decrease to remove more)
+	const double MIN_NOISE_RATIO = 1.5;          // Minimum noise/original ratio (decrease to be more sensitive)
+	const double MIN_SUPPRESSION = 0.4;          // Minimum suppression (40%)
+	const double MAX_SUPPRESSION = 0.92;         // Maximum suppression (92%)
+	const int NOTCH_RADIUS = 3;                  // Notch filter radius (increase for wider suppression)
+	
 	complex<double>** F_filtered = new complex<double>*[N];
 	for (int i = 0; i < N; i++) {
 		F_filtered[i] = new complex<double>[M];
@@ -263,7 +272,7 @@ void main()
 	}
 	
 	// Find threshold based on top differences
-	int percentile_idx = (int)(peak_count * 0.003);  // Top 0.3%
+	int percentile_idx = (int)(peak_count * PEAK_PERCENTILE);
 	if (percentile_idx < 10) percentile_idx = 10;
 	double diff_threshold = noise_peaks[percentile_idx].difference;
 	
@@ -272,32 +281,36 @@ void main()
 		 << ", diff=" << noise_peaks[0].difference 
 		 << " at (" << noise_peaks[0].u << "," << noise_peaks[0].v << ")" << endl;
 	cout << "   - Difference threshold: " << diff_threshold << endl;
+	cout << "   - Parameters: PERCENTILE=" << PEAK_PERCENTILE 
+		 << ", RATIO=" << MIN_NOISE_RATIO 
+		 << ", MULT=" << DIFF_THRESHOLD_MULT 
+		 << ", RADIUS=" << NOTCH_RADIUS << endl;
 	
 	// Apply notch filter to peaks where noise magnitude >> original magnitude
 	int peaks_removed = 0;
 	
 	for (int i = 0; i < peak_count; i++) {
 		// Stop if difference becomes insignificant
-		if (noise_peaks[i].difference < diff_threshold * 0.3) break;
+		if (noise_peaks[i].difference < diff_threshold * DIFF_THRESHOLD_MULT) break;
 		
 		int u = noise_peaks[i].u;
 		int v = noise_peaks[i].v;
 		double mag_orig = noise_peaks[i].mag_original;
 		double mag_noise = noise_peaks[i].mag_noise;
 		
-		// Only suppress if noise is significantly larger (ratio > 2)
-		if (noise_peaks[i].ratio > 1.5 || noise_peaks[i].difference > diff_threshold) {
+		// Only suppress if noise is significantly larger
+		if (noise_peaks[i].ratio > MIN_NOISE_RATIO || noise_peaks[i].difference > diff_threshold) {
 			// Calculate suppression factor: reduce to original level
 			double target_reduction = 0.0;
 			if (mag_noise > 0) {
 				target_reduction = 1.0 - (mag_orig / mag_noise);
 				// Limit suppression to avoid artifacts
-				if (target_reduction > 0.92) target_reduction = 0.92;
-				if (target_reduction < 0.4) target_reduction = 0.4;
+				if (target_reduction > MAX_SUPPRESSION) target_reduction = MAX_SUPPRESSION;
+				if (target_reduction < MIN_SUPPRESSION) target_reduction = MIN_SUPPRESSION;
 			}
 			
 			// Apply notch filter around this peak
-			int radius = 3;
+			int radius = NOTCH_RADIUS;
 			for (int du = -radius; du <= radius; du++) {
 				for (int dv = -radius; dv <= radius; dv++) {
 					int nu = u + du;
